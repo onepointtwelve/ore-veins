@@ -35,12 +35,16 @@ public interface IVein<T extends IVeinType<?>>
     @Nonnull
     BlockPos getPos();
 
+    void setPos(@Nonnull BlockPos pos);
+
     /**
      * Gets the type of this vein instance
      *
      * @return a vein type
      */
     T getType();
+
+    float getSize();
 
     /**
      * Checks if the vein is in range of a point.

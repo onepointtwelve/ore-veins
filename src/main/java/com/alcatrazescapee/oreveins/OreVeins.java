@@ -30,14 +30,14 @@ import com.alcatrazescapee.oreveins.world.WorldGenVeins;
 @Mod(modid = OreVeins.MOD_ID, version = OreVeins.VERSION, dependencies = OreVeins.DEPENDENCIES, acceptableRemoteVersions = "*")
 public class OreVeins
 {
-    public static final String MOD_ID = "oreveins";
-    public static final String MOD_NAME = "Ore Veins";
-    public static final String VERSION = "GRADLE:VERSION";
+    public static final String MOD_ID = OreVeinsGenerated.MOD_ID;
+    public static final String MOD_NAME = OreVeinsGenerated.MOD_NAME;
+    public static final String VERSION = OreVeinsGenerated.MOD_VERSION;
 
-    private static final String FORGE_MIN = "14.23.2.2611";
-    private static final String FORGE_MAX = "15.0.0.0";
+    private static final String FORGE_MIN = OreVeinsGenerated.FORGE_MIN;
+    private static final String FORGE_MAX = OreVeinsGenerated.FORGE_MAX;
 
-    public static final String DEPENDENCIES = "required-after:forge@[" + FORGE_MIN + "," + FORGE_MAX + ");";
+    public static final String DEPENDENCIES = OreVeinsGenerated.DEPENDENCIES;
 
     private static Logger log;
 

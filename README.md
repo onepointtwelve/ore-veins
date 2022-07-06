@@ -38,7 +38,8 @@ Each entry can also contain any or all of the following values. If they don't ex
 Veins represent different types of shapes or structures that can be spawned. Each entry must define a vein type.
 
 *Spheres*: (`"type": "sphere"`)
-This represents a single sphere (or spheroid, if vertical and horizontal size values are different). This vein type has no additional parameters.
+This represents a single sphere (or spheroid, if vertical and horizontal size values are different). This vein type has no additional parameters. This vein type has an optional parameter:
+* `uniform` (Default: `false`) This is a boolean which determines if the density of the sphere will be uniformly distributed, or if it will be denser towards the center.
 
 *Clusters* (`"type": "cluster"`)
 This vein represents a scattered group of spheroids.  This vein type has an optional parameter:

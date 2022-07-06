@@ -7,6 +7,8 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
+import org.apache.logging.log4j.Logger;
+
 import com.google.gson.annotations.SerializedName;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
@@ -23,27 +25,38 @@ import com.alcatrazescapee.oreveins.vein.VeinRegistry;
 @ParametersAreNonnullByDefault
 public abstract class AbstractVeinType<V extends AbstractVein<?>> implements IVeinType<V>
 {
+
+    protected boolean disabled = false;
+
     protected int count = 1;
     protected int rarity = 10;
+
     @SerializedName("min_y")
     protected int minY = 16;
+
     @SerializedName("max_y")
     protected int maxY = 64;
+
     @SerializedName("use_relative_y")
     protected boolean useRelativeY = false;
+
     @SerializedName("vertical_size")
     protected int verticalSize = 8;
+
     @SerializedName("horizontal_size")
     protected int horizontalSize = 15;
+
     protected float density = 20;
 
     @SerializedName("dimensions_is_whitelist")
     protected boolean dimensionIsWhitelist = true;
+
     @SerializedName("biomes_is_whitelist")
     protected boolean biomesIsWhitelist = true;
 
     @SerializedName("stone")
     private List<IBlockState> stoneStates = null;
+    
     @SerializedName("ore")
     private IWeightedList<IBlockState> oreStates = null;
 
@@ -76,6 +89,10 @@ public abstract class AbstractVeinType<V extends AbstractVein<?>> implements IVe
     @Override
     public boolean canGenerateAt(World world, BlockPos pos)
     {
+        if (this.disabled) {
+            return false;
+        }
+
         IBlockState stoneState = world.getBlockState(pos);
         if (stoneStates.contains(stoneState))
         {
@@ -97,6 +114,10 @@ public abstract class AbstractVeinType<V extends AbstractVein<?>> implements IVe
     @Override
     public boolean inRange(V vein, int xOffset, int zOffset)
     {
+        if (this.disabled) {
+            return false;
+        }
+
         return xOffset * xOffset + zOffset * zOffset < horizontalSize * horizontalSize * vein.getSize();
     }
 
@@ -124,7 +145,7 @@ public abstract class AbstractVeinType<V extends AbstractVein<?>> implements IVe
         for (String s : biomes)
         {
             //noinspection ConstantConditions
-            String biomeName = biome.getRegistryName().getResourcePath();
+            String biomeName = biome.getRegistryName().getPath();
             if (biomeName.equals(s))
             {
                 return biomesIsWhitelist;
@@ -138,19 +159,6 @@ public abstract class AbstractVeinType<V extends AbstractVein<?>> implements IVe
             }
         }
         return !biomesIsWhitelist;
-    }
-
-    @Override
-    public boolean isValid()
-    {
-        return oreStates != null && !oreStates.isEmpty() &&
-                stoneStates != null && !stoneStates.isEmpty() &&
-                (indicator == null || (!indicator.isEmpty() && indicator.values().stream().map(Indicator::isValid).reduce((x, y) -> x && y).orElse(false))) &&
-                maxY > minY && (minY >= 0 || useRelativeY) &&
-                count > 0 &&
-                rarity > 0 &&
-                verticalSize > 0 && horizontalSize > 0 && density > 0;
-
     }
 
     @Override
@@ -177,26 +185,24 @@ public abstract class AbstractVeinType<V extends AbstractVein<?>> implements IVe
         return String.format("[%s: Count: %d, Rarity: %d, Y: %d - %d, Size: %d / %d, Density: %2.2f, Ores: %s, Stones: %s]", VeinRegistry.getName(this), count, rarity, minY, maxY, horizontalSize, verticalSize, density, oreStates, stoneStates);
     }
 
-    protected final BlockPos defaultStartPos(int chunkX, int chunkZ, Random rand)
-    {
+    protected final BlockPos defaultStartPos(int chunkX, int chunkZ, Random rand) {
         int spawnRange = maxY - minY, minRange = minY;
-        if (OreVeinsConfig.AVOID_VEIN_CUTOFFS)
-        {
-            if (verticalSize * 2 < spawnRange)
-            {
+
+        if (OreVeinsConfig.AVOID_VEIN_CUTOFFS) {
+            if (verticalSize * 2 < spawnRange) {
                 spawnRange -= verticalSize * 2;
                 minRange += verticalSize;
             }
-            else
-            {
+            else {
                 minRange = minY + (maxY - minY) / 2;
                 spawnRange = 1;
             }
         }
+
         return new BlockPos(
-                chunkX * 16 + rand.nextInt(16),
-                minRange + rand.nextInt(spawnRange),
-                chunkZ * 16 + rand.nextInt(16)
+            chunkX * 16 + rand.nextInt(16),
+            minRange + rand.nextInt(spawnRange),
+            chunkZ * 16 + rand.nextInt(16)
         );
     }
 
@@ -216,5 +222,74 @@ public abstract class AbstractVeinType<V extends AbstractVein<?>> implements IVe
     public boolean useRelativeY()
     {
         return useRelativeY;
+    }
+
+    public abstract V createVein(int chunkX, int chunkZ, Random random);
+
+    @Override
+    public void createVeins(List<IVein<?>> veins, int chunkX, int chunkZ, Random random) {
+        V vein = this.createVein(chunkX, chunkZ, random);
+        veins.add(vein);
+    }
+
+    @Override
+    public boolean isValid(Logger logger, String veinName) {
+        if (this.disabled) {
+            logger.warn("Vein {} is explicitly disabled", veinName);
+            return false;
+        }
+
+        boolean value =
+            oreStates != null && !oreStates.isEmpty() &&
+            stoneStates != null && !stoneStates.isEmpty() &&
+            (indicator == null || (!indicator.isEmpty() && indicator.values().stream().map(Indicator::isValid).reduce((x, y) -> x && y).orElse(false))) &&
+            maxY > minY && (minY >= 0 || useRelativeY) &&
+            count > 0 &&
+            rarity > 0 &&
+            verticalSize > 0 && horizontalSize > 0 && density > 0
+        ;
+
+        if (oreStates == null || oreStates.isEmpty()) {
+            logger.error("Vein {} has no ore defined", veinName);
+        }
+
+        if (stoneStates == null || stoneStates.isEmpty()) {
+            logger.error("Vein {} has no stones defined", veinName);
+        }
+
+        if (indicator != null && !indicator.isEmpty() && !indicator.values().stream().map(Indicator::isValid).reduce((x, y) -> x && y).orElse(false)) {
+            logger.error("Vein {} has invalid indicators", veinName);
+        }
+
+        if (maxY <= minY) {
+            logger.error("Vein {} has maxY <= minY ({} <= {})", veinName, maxY, minY);
+        }
+
+        if (minY < 0 && !useRelativeY) {
+            logger.error("Vein {} has minY ({}) < 0 and useRelativeY = false", veinName, minY);
+        }
+
+        if (count <= 0) {
+            logger.error("Vein {} has nonpositive count {}", veinName, count);
+        }
+
+        if (rarity <= 0) {
+            logger.error("Vein {} has nonpositive rarity {}", veinName, rarity);
+        }
+
+        if (verticalSize <= 0) {
+            logger.error("Vein {} has nonpositive verticalSize {}", veinName, verticalSize);
+        }
+
+        if (horizontalSize <= 0) {
+            logger.error("Vein {} has nonpositive horizontalSize {}", veinName, horizontalSize);
+        }
+
+        if (density <= 0) {
+            logger.error("Vein {} has nonpositive density {}", veinName, density);
+        }
+
+        return value;
+
     }
 }

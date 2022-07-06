@@ -10,39 +10,40 @@ import net.minecraft.world.World;
 import com.alcatrazescapee.oreveins.vein.VeinRegistry;
 
 @ParametersAreNonnullByDefault
-public abstract class AbstractVein<T extends IVeinType<?>> implements IVein<T>
-{
+public abstract class AbstractVein<T extends IVeinType<?>> implements IVein<T> {
     protected final T type;
-    protected final BlockPos pos;
-    protected final float size;
+    protected BlockPos pos;
+    protected float size;
 
-    public AbstractVein(T type, BlockPos pos, float size)
-    {
+    public AbstractVein(T type, BlockPos pos, float size) {
         this.pos = pos;
         this.type = type;
         this.size = size;
     }
 
-    public AbstractVein(T type, BlockPos pos, Random random)
-    {
+    public AbstractVein(T type, BlockPos pos, Random random) {
         this(type, pos, 0.7f + random.nextFloat() * 0.3f);
     }
 
     @Nonnull
     @Override
-    public BlockPos getPos()
-    {
+    public BlockPos getPos() {
         return pos;
     }
 
+    @Nonnull
     @Override
-    public T getType()
-    {
+    public void setPos(@Nonnull BlockPos pos) {
+        this.pos = pos;
+    }
+
+    @Override
+    public T getType() {
         return type;
     }
 
-    public float getSize()
-    {
+    @Override
+    public float getSize() {
         return size;
     }
 

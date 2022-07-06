@@ -7,10 +7,13 @@
 package com.alcatrazescapee.oreveins.api;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Random;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
+
+import org.apache.logging.log4j.Logger;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
@@ -109,7 +112,7 @@ public interface IVeinType<V extends IVein<?>>
      *
      * @return true if the vein is valid
      */
-    boolean isValid();
+    boolean isValid(Logger logger, String veinName);
 
     /**
      * Gets the min Y which this vein can spawn at
@@ -161,6 +164,6 @@ public interface IVeinType<V extends IVein<?>>
      * @return a new vein instance
      */
     @Nonnull
-    V createVein(int chunkX, int chunkZ, Random rand);
+    void createVeins(List<IVein<?>> veins, int chunkX, int chunkZ, Random rand);
 
 }

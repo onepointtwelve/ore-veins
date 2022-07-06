@@ -16,17 +16,21 @@ import com.alcatrazescapee.oreveins.api.DefaultVeinType;
 
 @SuppressWarnings({"unused"})
 @ParametersAreNonnullByDefault
-public class VeinTypeSphere extends DefaultVeinType
-{
-    @Override
-    public float getChanceToGenerate(DefaultVein vein, BlockPos pos)
-    {
-        final double dx = Math.pow(vein.getPos().getX() - pos.getX(), 2);
-        final double dy = Math.pow(vein.getPos().getY() - pos.getY(), 2);
-        final double dz = Math.pow(vein.getPos().getZ() - pos.getZ(), 2);
+public class VeinTypeSphere extends DefaultVeinType {
+    
+    boolean uniform = false;
 
-        final float radius = (float) ((dx + dz) / (horizontalSize * horizontalSize * vein.getSize()) +
-                dy / (verticalSize * verticalSize * vein.getSize()));
+    @Override
+    public float getChanceToGenerate(DefaultVein vein, BlockPos pos) {
+        float dx = (vein.getPos().getX() - pos.getX()) * (vein.getPos().getX() - pos.getX());
+        float dy = (vein.getPos().getY() - pos.getY()) * (vein.getPos().getY() - pos.getY());
+        float dz = (vein.getPos().getZ() - pos.getZ()) * (vein.getPos().getZ() - pos.getZ());
+
+        float radius = ((dx + dz) / (horizontalSize * horizontalSize * vein.getSize()) + dy / (verticalSize * verticalSize * vein.getSize()));
+        if (uniform && radius < 1.0f) {
+            radius = 0.0f;
+        }
+
         return 0.005f * density * (1.0f - radius);
     }
 }

@@ -1,4 +1,6 @@
 {
+  "$schema": "../oreveins.schema.json",
+
   "iron_ore_example": {
     "type": "cluster",
     "ore": "ore:oreIron",

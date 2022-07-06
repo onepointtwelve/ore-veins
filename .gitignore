@@ -1,13 +1,19 @@
 # Gradle
 *.bin
+/bin/
 /build/
 /.gradle/
+secret.gradle
+/src/generated/java
 
 # IntelliJ
 /.idea/
 *.iml
 *.ipr
 *.iws
+
+# VSCode
+/.vscode/
 
 # Python
 *.py

@@ -37,6 +37,9 @@ import static com.alcatrazescapee.oreveins.OreVeins.MOD_ID;
 
 public final class VeinRegistry
 {
+
+    private static final String SCHEMA_FILENAME = "oreveins.schema.json";
+
     private static final BiMap<String, IVeinType> VEINS = HashBiMap.create();
     private static final Gson GSON = new GsonBuilder()
             .registerTypeAdapter(IVeinType.class, new VeinTypeDeserializer())
@@ -73,6 +76,7 @@ public final class VeinRegistry
         OreVeins.getLog().info("Loading or creating ore generation config file");
 
         worldGenFolder = new File(modConfigDir, MOD_ID);
+
         if (OreVeinsConfig.ALWAYS_CREATE_DEFAULT_CONFIG)
         {
             if (!worldGenFolder.exists() && !worldGenFolder.mkdir())
@@ -82,7 +86,7 @@ public final class VeinRegistry
             else
             {
                 // Config file exists, so verify that the default file is there as well
-                File defaultFile = new File(worldGenFolder, "ore_veins.json");
+                File defaultFile = new File(worldGenFolder, "default.json");
                 String defaultData = null;
                 if (defaultFile.exists())
                 {
@@ -99,7 +103,7 @@ public final class VeinRegistry
                 {
                     try
                     {
-                        FileUtils.copyInputStreamToFile(WorldGenVeins.class.getResourceAsStream("/assets/ore_veins.json"), defaultFile);
+                        FileUtils.copyInputStreamToFile(WorldGenVeins.class.getResourceAsStream("/assets/oreveins/default.json"), defaultFile);
                     }
                     catch (IOException e)
                     {
@@ -108,6 +112,17 @@ public final class VeinRegistry
                 }
             }
         }
+
+        File schemaFile = new File(modConfigDir, SCHEMA_FILENAME);
+        if (!schemaFile.exists()) {
+            try {
+                FileUtils.copyInputStreamToFile(WorldGenVeins.class.getResourceAsStream("/assets/oreveins/" + SCHEMA_FILENAME), schemaFile);
+
+            } catch (IOException e) {
+                OreVeins.getLog().warn("Error copying " + SCHEMA_FILENAME + " into config directory", e);
+            }
+        }
+
     }
 
     public static void reloadVeins()
@@ -135,7 +150,7 @@ public final class VeinRegistry
                     try
                     {
                         IVeinType<?> vein = GSON.fromJson(entry.getValue(), IVeinType.class);
-                        if (vein.isValid())
+                        if (vein.isValid(OreVeins.getLog(), entry.getKey()))
                         {
                             if (VEINS.containsKey(entry.getKey()))
                             {

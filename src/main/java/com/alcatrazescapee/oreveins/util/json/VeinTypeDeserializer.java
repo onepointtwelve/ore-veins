@@ -17,7 +17,7 @@ import com.alcatrazescapee.oreveins.vein.*;
 
 public class VeinTypeDeserializer implements JsonDeserializer<IVeinType<?>>
 {
-    private final Map<String, Class<? extends IVeinType>> types = new HashMap<>();
+    private final Map<String, Class<? extends IVeinType<?>>> types = new HashMap<>();
 
     public VeinTypeDeserializer()
     {
@@ -27,6 +27,7 @@ public class VeinTypeDeserializer implements JsonDeserializer<IVeinType<?>>
         types.put("cone", VeinTypeCone.class);
         types.put("pipe", VeinTypePipe.class);
         types.put("curve", VeinTypeCurve.class);
+        types.put("multiple", VeinTypeMultiple.class);
     }
 
     @Override

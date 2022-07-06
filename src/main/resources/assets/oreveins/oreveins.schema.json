@@ -1,0 +1,574 @@
+{
+  "$schema": "https://json-schema.org/draft-04/schema#",
+
+  "title": "Realistic Ore Veins Schema Definition",
+  "description": "JSON-Schema for veins jsons",
+  "type": "object",
+
+  "properties": {
+    "$schema": {
+      "type": "string"
+    }
+  },
+
+  "additionalProperties": {
+    "$ref": "#/definitions/vein"
+  },
+
+  "definitions": {
+
+    "block_entry_string_block_registry": {
+      "type": "string",
+      "description": "A single string representing a block's registry name"
+    },
+
+    "block_entry_string_ore_dict": {
+      "type": "string",
+      "description": "A single string representing a block via a corresponding ore dictionary name, prefixed with \"ore\""
+    },
+
+    "block_entry_obj_block": {
+      "type": "object",
+      "description": "A single object representing a block with metadata",
+      "properties": {
+        "block": {
+          "type": "string",
+          "description": "A single string representing a block's registry name"
+        },
+
+        "meta": {
+          "type": "integer",
+          "description": "IBlockState metadata value"
+        },
+
+        "weight": {
+          "type": "integer",
+          "description": "Weight (Default: 1)"
+        }
+      },
+
+      "required": [
+        "block"
+      ]
+    },
+
+    "block_entry_obj_ore": {
+      "type": "object",
+      "description": "A single object representing a block via an corresponding ore dictionary name",
+      "properties": {
+        "ore": {
+          "type": "string",
+          "description": "A single string representing a block via a corresponding ore dictionary name"
+        },
+
+        "meta": {
+          "type": "integer",
+          "description": "IBlockState metadata value"
+        },
+
+        "weight": {
+          "type": "integer",
+          "description": "Weight (Default: 1)"
+        }
+      },
+
+      "required": [
+        "ore"
+      ]
+    },
+
+    "block_entry_weighted_list": {
+      "type": "array",
+      "description": "A list of objects (as above). Note that these can be weighed (when used in ore) but are not necessary. If weight is not found for a particular object, it will default to 1",
+      "items": {
+        "$ref": "#/definitions/block_entry_single"
+      }
+    },
+
+    "block_entry_single": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/block_entry_string_block_registry"
+        },
+        {
+          "$ref": "#/definitions/block_entry_string_ore_dict"
+        },
+        {
+          "$ref": "#/definitions/block_entry_obj_block"
+        },
+        {
+          "$ref": "#/definitions/block_entry_obj_ore"
+        }
+      ]
+    },
+
+    "block_entry": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/block_entry_string_block_registry"
+        },
+        {
+          "$ref": "#/definitions/block_entry_string_ore_dict"
+        },
+        {
+          "$ref": "#/definitions/block_entry_obj_block"
+        },
+        {
+          "$ref": "#/definitions/block_entry_obj_ore"
+        },
+        {
+          "$ref": "#/definitions/block_entry_weighted_list"
+        }
+      ]
+    },
+
+
+    "indicator_single": {
+      "type": "object",
+      "description": "Configurable objects that will spawn on the surface when a vein is detected underneath them",
+      
+      "properties": {
+        "blocks": {
+          "$ref": "#/definitions/block_entry"
+        },
+
+        "rarity": {
+          "type": "integer",
+          "description": "1 / N blocks will generate an indicator, provided there is a valid ore block directly underneath (Default: 10)"
+        },
+
+        "max_depth": {
+          "type": "integer",
+          "description": "This is the maximum depth for an ore block to generate which would attempt to spawn an indicator (Default: 32)"
+        },
+
+        "ignore_vegetation": {
+          "type": "boolean",
+          "description": "If the vein should ignore vegetation when trying to spawn indicators. (i.e. should the indicators spawn underneath trees, leaves or huge mushrooms?) (Default: true)"
+        },
+
+        "ignore_liquids": {
+          "type": "boolean",
+          "description": "If the vein should ignore liquids when trying to spawn indicators. (i.e. should the indicator spawn inside lakes or the ocean?) (Default: false)"
+        },
+
+        "blocks_under": {
+          "$ref": "#/definitions/block_entry_weighted_list",
+          "description": "Weighted list of block entries. The list of blocks that this indicator is allowed to spawn on (Default: accepts all blocks)"
+        },
+
+        "weight": {
+          "type": "integer",
+          "description": "If specified in a list, this is the weight assigned to each entry (Default: 1)"
+        }
+      },
+
+      "required": [
+        "blocks"
+      ]
+    },
+
+    "indicator_list": {
+      "type": "array",
+      "description": "A weighted list of indicators",
+      "items": {
+        "$ref": "#/definitions/indicator_single"
+      }
+    },
+
+    "indicator": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/indicator_single"
+        },
+        {
+          "$ref": "#/definitions/indicator_list"
+        }
+      ]
+    },
+
+    "condition_generic": {
+      "type": "object",
+      "description": "A condition is a check for each ore block in a vein. The vein will still generate, but ore each block will only appear if each condition is passed"
+    },
+
+    "condition_touching": {
+      "allOf": [{ "$ref": "#/definitions/condition_generic" }],
+
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "The name of the condition",
+          "enum": [
+            "touching"
+          ]
+        },
+
+        "block": {
+          "$ref": "#/definitions/block_entry_single",
+          "description": "A Block Entry (Not a list! A single block entry!) which specifies a block that the vein must touch"
+        },
+
+        "min": {
+          "type": "integer",
+          "description": "This specifies the minimum amount of additional blocks that this ore block must touch (Default: 1)"
+        },
+
+        "max": {
+          "type": "integer",
+          "description": "This specifies the maximum amount of additional blocks that this ore block must touch (Default: Infinity)"
+        }
+        
+      },
+
+      "required": [
+        "type",
+        "block"
+      ]
+    },
+
+    "condition": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/condition_touching"
+        }
+      ]
+    },
+
+    "condition_list": {
+      "type": "array",
+      "description": "A list of conditions",
+      "items": {
+        "$ref": "#/definitions/condition"
+      }
+    },
+
+
+    "vein_common": {
+      "type": "object",
+      "properties": {
+        "count": {
+          "type": "integer",
+          "description": "Generate at most N veins per chunk. Rarity is applied to each attempt to generate a vein (Default: 1)"
+        },
+
+        "rarity": {
+          "type": "integer",
+          "description": "1 / N chunks will spawn this ore vein (Default: 10)"
+        },
+
+        "min_y": {
+          "type": "integer",
+          "description": "Minimum y value for veins to generate at (Default: 16)"
+        },
+
+        "max_y": {
+          "type": "integer",
+          "description": "Maximum y value for veins to generate at (Default: 64)"
+        },
+
+        "use_relative_y": {
+          "type": "boolean",
+          "description": "If true, the y-values will be interpreted as an offset from the surface at each position. (i.e. min_y = -20, max_y = -5 will generate ore veins from 20 to 5 blocks under the surface) (Default: false)"
+        },
+
+        "density": {
+          "type": "integer",
+          "description": "Density of the ore vein. Higher values are more dense. (FYI: This number is not a percentage. For 100% density use values >1000) (Default: 50)"
+        },
+
+        "vertical_size": {
+          "type": "integer",
+          "description": "Vertical radius. This is not an absolute number in blocks, but is close to. Experimentation is required (Default: 15)"
+        },
+
+        "horizontal_size": {
+          "type": "integer",
+          "description": "Horizontal radius. This is not an absolute number in blocks, but is close to. Experimentation is required (Default: 8)"
+        },
+
+        "biomes": {
+          "type": "array",
+          "description": "Whitelist of biome names or biome tags for a biome to spawn in. Must be a list of strings. For info on possible tags see the Forge Biome Dictionary (Default is all)",
+          "items": {
+            "type": "string"
+          }
+        },
+
+        "biomes_is_whitelist": {
+          "type": "boolean",
+          "description": "When false, the biome list becomes a blacklist (Default: true)"
+        },
+
+        "dimensions": {
+          "type": "array",
+          "description": "Whitelist of dimension ids that the ore can spawn in. Must be a list of integers (Default: 0)",
+          "items": {
+            "type": "integer"
+          }
+        },
+
+        "dimensions_is_whitelist": {
+          "type": "boolean",
+          "description": "When false, the dimension list becomes a blacklist (Default: true)"
+        },
+
+        "indicator": {
+          "$ref": "#/definitions/indicator",
+          "description": "This is an Indicator which will spawn on the surface underneath where the vein is found. This can also be a weighted list of multiple indicators, in which case only one will be chosen for each vertical column within range of a vein (Default: empty)"
+        },
+
+        "conditions": {
+          "$ref": "#/definitions/condition_list",
+          "description": "This is a list of json objects which specifies conditions on each individual block within the ore vein (Default: none)"
+        }
+      }
+    },
+
+    "vein_single_default": {
+      "allOf": [{ "$ref": "#/definitions/vein_common" }],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "The registry name of the Vein Type that this entry will spawn. Based on what vein this is, there might be other required or optional values as well",
+          "enum": [
+            "pipe"
+          ]
+        },
+
+        "ore": {
+          "$ref": "#/definitions/block_entry",
+          "description": "Block Entry, with optional weights. This represents the possible states that the vein will spawn. This does support weighted entries"
+        },
+
+        "stone": {
+          "$ref": "#/definitions/block_entry",
+          "description": "Block Entry. This represents the block states that the ore can spawn in"
+        }
+      },
+
+      "required": [
+        "type",
+        "ore",
+        "stone"
+      ]
+    },
+    
+    "vein_single_sphere": {
+      "allOf": [{ "$ref": "#/definitions/vein_common" }],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "The registry name of the Vein Type that this entry will spawn. Based on what vein this is, there might be other required or optional values as well",
+          "enum": [
+            "sphere"
+          ]
+        },
+
+        "ore": {
+          "$ref": "#/definitions/block_entry",
+          "description": "Block Entry, with optional weights. This represents the possible states that the vein will spawn. This does support weighted entries"
+        },
+
+        "stone": {
+          "$ref": "#/definitions/block_entry",
+          "description": "Block Entry. This represents the block states that the ore can spawn in"
+        },
+
+        "uniform": {
+          "type": "boolean",
+          "description": "This is a boolean which determines if the density of the sphere will be uniformly distributed, or if it will be denser towards the center (Default: `false`)"
+        }
+      },
+
+      "required": [
+        "type",
+        "ore",
+        "stone"
+      ]
+    },
+
+    "vein_single_cluster": {
+      "allOf": [{ "$ref": "#/definitions/vein_common" }],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "The registry name of the Vein Type that this entry will spawn. Based on what vein this is, there might be other required or optional values as well",
+          "enum": [
+            "cluster"
+          ]
+        },
+
+        "ore": {
+          "$ref": "#/definitions/block_entry",
+          "description": "Block Entry, with optional weights. This represents the possible states that the vein will spawn. This does support weighted entries"
+        },
+
+        "stone": {
+          "$ref": "#/definitions/block_entry",
+          "description": "Block Entry. This represents the block states that the ore can spawn in"
+        },
+
+        "clusters": {
+          "type": "integer",
+          "description": "This represents the average number of other clusters that will spawn as part of this vein (Default: 3)"
+        }
+      },
+
+      "required": [
+        "type",
+        "ore",
+        "stone"
+      ]
+    },
+
+    "vein_single_cone": {
+      "allOf": [{ "$ref": "#/definitions/vein_common" }],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "The registry name of the Vein Type that this entry will spawn. Based on what vein this is, there might be other required or optional values as well",
+          "enum": [
+            "cone"
+          ]
+        },
+
+        "ore": {
+          "$ref": "#/definitions/block_entry",
+          "description": "Block Entry, with optional weights. This represents the possible states that the vein will spawn. This does support weighted entries"
+        },
+
+        "stone": {
+          "$ref": "#/definitions/block_entry",
+          "description": "Block Entry. This represents the block states that the ore can spawn in"
+        },
+
+        "inverted": {
+          "type": "boolean",
+          "description": "If true, the cone will have a pointy end facing down. If false, the pointy end will face up (Default: false)"
+        },
+
+        "shape": {
+          "type": "number",
+          "description": "This value determines how pointy the cone will be. It should be between 0.0 and 1.0. Higher values mean less pointy (more cylindrical). Smaller values are more pointy (Default: 0.5)"
+        }
+      },
+
+      "required": [
+        "type",
+        "ore",
+        "stone"
+      ]
+    },
+
+    "vein_single_curve": {
+      "allOf": [{ "$ref": "#/definitions/vein_common" }],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "The registry name of the Vein Type that this entry will spawn. Based on what vein this is, there might be other required or optional values as well",
+          "enum": [
+            "curve"
+          ]
+        },
+
+        "ore": {
+          "$ref": "#/definitions/block_entry",
+          "description": "Block Entry, with optional weights. This represents the possible states that the vein will spawn. This does support weighted entries"
+        },
+
+        "stone": {
+          "$ref": "#/definitions/block_entry",
+          "description": "Block Entry. This represents the block states that the ore can spawn in"
+        },
+
+        "radius": {
+          "type": "integer",
+          "description": "This is the approximate radius of the curve in blocks (Default: 5)"
+        },
+
+        "angle": {
+          "type": "integer",
+          "description": "This is the maximum angle for vertical vein rotation, in a range from 0 to 90. Zero be completely horizontal, and 90 will have the full range of vertical directions to curve in (Default: 45)"
+        }
+      },
+
+      "required": [
+        "type",
+        "ore",
+        "stone"
+      ]
+    },
+
+    "vein_multiple": {
+      "allOf": [{ "$ref": "#/definitions/vein_common" }],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "The registry name of the Vein Type that this entry will spawn. Based on what vein this is, there might be other required or optional values as well",
+          "enum": [
+            "multiple"
+          ]
+        },
+
+        "veins": {
+          "type": "array",
+          "description": "An array of atleast 2 or more veins",
+          "minItems": 2,
+          "items": {
+              "$ref": "#/definitions/vein_single"
+          }
+        }
+      },
+
+      "required": [
+        "type",
+        "veins"
+      ]
+    },
+
+    "vein_single": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/vein_single_default"
+        },
+        {
+          "$ref": "#/definitions/vein_single_sphere"
+        },
+        {
+          "$ref": "#/definitions/vein_single_cluster"
+        },
+        {
+          "$ref": "#/definitions/vein_single_cone"
+        },
+        {
+          "$ref": "#/definitions/vein_single_curve"
+        }
+      ]
+    },
+
+    "vein": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/vein_single_default"
+        },
+        {
+          "$ref": "#/definitions/vein_single_sphere"
+        },
+        {
+          "$ref": "#/definitions/vein_single_cluster"
+        },
+        {
+          "$ref": "#/definitions/vein_single_cone"
+        },
+        {
+          "$ref": "#/definitions/vein_single_curve"
+        },
+        {
+          "$ref": "#/definitions/vein_multiple"
+        }
+      ]
+    }
+
+  }
+}

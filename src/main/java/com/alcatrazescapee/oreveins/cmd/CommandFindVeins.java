@@ -51,10 +51,10 @@ public class CommandFindVeins extends CommandBase
         sender.sendMessage(new TextComponentString("Veins Found: "));
 
         final int radius = parseInt(args[1], 1, 1000);
-        final List<IVein> veins = WorldGenVeins.getNearbyVeins(sender.getCommandSenderEntity().chunkCoordX, sender.getCommandSenderEntity().chunkCoordZ, sender.getEntityWorld().getSeed(), radius);
+        final List<IVein<?>> veins = WorldGenVeins.getNearbyVeins(sender.getCommandSenderEntity().chunkCoordX, sender.getCommandSenderEntity().chunkCoordZ, sender.getEntityWorld().getSeed(), radius);
         if (!args[0].equals("all"))
         {
-            final IVeinType type = VeinRegistry.getVein(args[0]);
+            final IVeinType<?> type = VeinRegistry.getVein(args[0]);
             if (type == null)
             {
                 throw new WrongUsageException("Vein supplied does not match 'all' or any valid vein names. Use /veininfo to see valid vein names");
